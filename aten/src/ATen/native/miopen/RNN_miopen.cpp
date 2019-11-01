@@ -316,6 +316,13 @@ int64_t _num_linear_layers(miopenRNNMode_t mode) {
     }
 }
 
+void synchronize_miopen(miopenHandle_t handle)
+{
+    hipStream_t q;
+    MIOPEN_CHECK(miopenGetStream(handle, &q));
+    HIP_CHECK(hipStreamSynchronize(q));
+}
+
 std::pair<std::vector<Tensor>, size_t> get_parameters(miopenHandle_t handle, const RNNDescriptorParams& rnn,
                     const RNNDescriptor& rnn_desc, const TensorDescriptor& x_desc, const FilterDescriptor& w_desc,
                     const Tensor& weight_buf)
@@ -510,6 +517,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> miopen_rnn(
         MIOPEN_CHECK(miopenGetRNNTrainingReserveSize(handle, descs.rnn_desc.desc(), fn.tensors.seq_length, x_descs_arr.data(), &reserver_size));
         reserve = at::empty(reserver_size, input.options().dtype(kByte));
 
+        HIP_CHECK(hipStreamSynchronize(cuda::getCurrentHIPStream()));
         MIOPEN_CHECK(miopenRNNForwardTraining(handle, descs.rnn_desc.desc(), fn.tensors.seq_length,
                 x_descs_arr.data(), x.data_ptr(),
                 descs.hx_desc.desc(), hx.data_ptr(),
@@ -521,6 +529,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> miopen_rnn(
                 workspace.data_ptr(), workspace_size, reserve.data_ptr(), reserver_size ));
     } else { //Inference.
         reserve = at::empty({0}, input.options().dtype(kByte));
+        HIP_CHECK(hipStreamSynchronize(cuda::getCurrentHIPStream()));
         MIOPEN_CHECK(miopenRNNForwardInference(handle, descs.rnn_desc.desc(), fn.tensors.seq_length,
                 x_descs_arr.data(), x.data_ptr(),
                 descs.hx_desc.desc(), hx.data_ptr(),
@@ -531,6 +540,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor, Tensor> miopen_rnn(
                 descs.cy_desc.desc(), cy.defined() ? cy.data_ptr() : nullptr,
                 workspace.data_ptr(), workspace_size));
     }
+    synchronize_miopen(handle);
 
     if (batch_first && !is_input_packed) {
         output.transpose_(0, 1);
@@ -629,6 +639,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> miopen_rnn_backward_input(
         ));
     auto workspace = at::empty(workspace_size, input.options().dtype(kByte));
 
+    HIP_CHECK(hipStreamSynchronize(cuda::getCurrentHIPStream()));
     MIOPEN_CHECK(miopenRNNBackwardData(
         handle,
         descs.rnn_desc.desc(),
@@ -646,6 +657,7 @@ std::tuple<Tensor, Tensor, Tensor, Tensor> miopen_rnn_backward_input(
         workspace.data_ptr(), workspace.size(0),
         fn_reserve.data_ptr(), fn_reserve.size(0)
         ));
+    synchronize_miopen(handle);
 
     if(batch_first && !is_input_packed) {
         dx = dx.transpose_(0, 1);
@@ -713,6 +725,7 @@ std::vector<Tensor> miopen_rnn_backward_weight(
     auto x_descs_arr = descs.get_x_descs();
     auto y_descs_arr = descs.get_y_descs();
 
+    HIP_CHECK(hipStreamSynchronize(cuda::getCurrentHIPStream()));
     MIOPEN_CHECK(miopenRNNBackwardWeights(
         handle,
         descs.rnn_desc.desc(),
@@ -724,6 +737,7 @@ std::vector<Tensor> miopen_rnn_backward_weight(
         fn_workspace.data_ptr(), fn_workspace.size(0),
         fn_reserve.data_ptr(), fn_reserve.size(0)
         ));
+    synchronize_miopen(handle);
 
     std::vector<Tensor> grad_params_arr;
     size_t grad_params_stride0;
