@@ -8299,7 +8299,8 @@ class TestNNDeviceType(NNTestCase):
     def _test_rnn_retain_variables(self, device, dtype):
         rnns = [nn.LSTM(100, 200, num_layers=2).to(device, dtype),
                 nn.GRU(100, 200, num_layers=2).to(device, dtype),
-                nn.RNN(100, 200, num_layers=2).to(device, dtype)]
+                #nn.RNN(100, 200, num_layers=2).to(device, dtype)
+                ]
         for rnn in rnns:
             input = torch.randn(50, 60, 100, device=device, dtype=dtype, requires_grad=True)
             output = rnn(input)
