@@ -47,14 +47,11 @@ namespace detail {
   inline C10_HOST_DEVICE uint16_t round_to_nearest_even(float src) {
 #ifdef __HIP_PLATFORM_HCC__
     if (src != src) {
-      return UINT16_C(0x7FC0);
-    }
 #else
     if (std::isnan(src)) {
-      return UINT16_C(0x7FC0);
-    }
 #endif
-    else {
+      return UINT16_C(0x7FC0);
+    } else {
       union {
         uint32_t U32;
         float F32;
