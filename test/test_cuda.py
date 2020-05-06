@@ -1819,6 +1819,9 @@ class TestCuda(TestCase):
         a = torch.arange(25).cuda().float()
         a /= 100000000
         b = a.half()
+        print(a)
+        print(b)
+        print(b.norm())
         self.assertGreater(b.norm().item(), 0)
 
     def test_norm_type_conversion(self):
