@@ -232,7 +232,7 @@ inline FunctionSchema make_function_schema_for_c10(const char* schema_str) {
               .options()                                                     \
               .kernel<&::caffe2::detail::call_caffe2_op_from_c10<            \
                   ::caffe2::_c10_ops::schema_##OperatorName,                 \
-                  OperatorClass>>(::c10::DispatchKey::HIP));
+                  OperatorClass>>(::c10::DispatchKey::CUDA));
 
 #else
 // Don't use c10 dispatcher on mobile because of binary size
