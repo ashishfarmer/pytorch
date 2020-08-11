@@ -211,6 +211,8 @@ C10_API Allocator* GetAllocator(const DeviceType& t);
 template <DeviceType t>
 struct AllocatorRegisterer {
   explicit AllocatorRegisterer(Allocator* alloc) {
+    if (t == DeviceType::HIP)
+      SetAllocator(DeviceType::CUDA, alloc);
     SetAllocator(t, alloc);
   }
 };
