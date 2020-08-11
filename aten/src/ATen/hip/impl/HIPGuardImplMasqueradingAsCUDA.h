@@ -56,13 +56,13 @@ struct HIPGuardImplMasqueradingAsCUDA final : public c10::impl::DeviceGuardImplI
   static constexpr DeviceType static_type = DeviceType::CUDA;
   HIPGuardImplMasqueradingAsCUDA() {}
   HIPGuardImplMasqueradingAsCUDA(DeviceType t) {
-    TORCH_INTERNAL_ASSERT(t == DeviceType::CUDA);
+    TORCH_INTERNAL_ASSERT(t == DeviceType::CUDA || t == DeviceType::HIP);
   }
   DeviceType type() const override {
     return DeviceType::CUDA;
   }
   Device exchangeDevice(Device d) const override {
-    TORCH_INTERNAL_ASSERT(d.type() == DeviceType::CUDA);
+    TORCH_INTERNAL_ASSERT(d.type() == DeviceType::CUDA || d.type() == DeviceType::HIP);
     Device old_device = getDevice();
     if (old_device.index() != d.index()) {
       C10_HIP_CHECK(hipSetDevice(d.index()));
@@ -75,7 +75,7 @@ struct HIPGuardImplMasqueradingAsCUDA final : public c10::impl::DeviceGuardImplI
     return Device(DeviceType::CUDA, device);
   }
   void setDevice(Device d) const override {
-    TORCH_INTERNAL_ASSERT(d.type() == DeviceType::CUDA);
+    TORCH_INTERNAL_ASSERT(d.type() == DeviceType::CUDA || d.type() == DeviceType::HIP);
     C10_HIP_CHECK(hipSetDevice(d.index()));
   }
   void uncheckedSetDevice(Device d) const noexcept override {
