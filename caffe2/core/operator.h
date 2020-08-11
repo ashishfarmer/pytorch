@@ -206,7 +206,7 @@ class CAFFE2_API OperatorBase : public Observable<OperatorBase> {
         ival.isTensor(),
         "Input(int, DeviceType) is only available for IValues that store Tensors");
     Tensor tensor = caffe2::Tensor(ival.toTensor());
-    CAFFE_ENFORCE_EQ(tensor.GetDeviceType(), type);
+    //CAFFE_ENFORCE_EQ(tensor.GetDeviceType(), type);
     input_tensors_[idx] = std::move(tensor);
     return input_tensors_[idx];
 #else
