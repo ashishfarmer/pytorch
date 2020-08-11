@@ -47,7 +47,14 @@ struct C10_API Device final {
   /// Returns true if the type and index of this `Device` matches that of
   /// `other`.
   bool operator==(const Device& other) const noexcept {
-    return this->type_ == other.type_ && this->index_ == other.index_;
+    bool isSameType = false;
+    if (this->type_ == other.type_)
+      isSameType = true;
+    else {
+      isSameType = (this->type_ == DeviceType::CUDA && other.type_ == DeviceType::HIP) || (this->type_ == DeviceType::HIP && other.type_ == DeviceType::CUDA);
+    }
+
+    return isSameType && this->index_ == other.index_;
   }
 
   /// Returns true if the type or index of this `Device` differs from that of
@@ -78,7 +85,7 @@ struct C10_API Device final {
 
   /// Return true if the device is of CUDA type.
   bool is_cuda() const noexcept {
-    return type_ == DeviceType::CUDA;
+    return (type_ == DeviceType::CUDA || type_ == DeviceType::HIP);
   }
 
   /// Return true if the device is of CPU type.
