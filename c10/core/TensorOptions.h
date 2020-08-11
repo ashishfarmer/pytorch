@@ -396,7 +396,7 @@ struct C10_API TensorOptions {
           case DeviceType::IDEEP:
             return DispatchKey::IDEEP;
           case DeviceType::HIP:
-            return DispatchKey::HIP;
+            return DispatchKey::CUDA;
           case DeviceType::FPGA:
             return DispatchKey::FPGA;
           case DeviceType::MSNPU:
