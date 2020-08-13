@@ -206,8 +206,17 @@ class CAFFE2_API OperatorBase : public Observable<OperatorBase> {
         ival.isTensor(),
         "Input(int, DeviceType) is only available for IValues that store Tensors");
     Tensor tensor = caffe2::Tensor(ival.toTensor());
-    CAFFE_ENFORCE_EQ(tensor.GetDeviceType(), type);
-    input_tensors_[idx] = std::move(tensor);
+    if (type == DeviceType::HIP && (tensor.GetDeviceType() == DeviceType::CUDA)) {
+      Tensor hip_aliased_tensor = caffe2::Tensor(DeviceType::HIP);
+      CAFFE_ENFORCE_EQ(hip_aliased_tensor.GetDeviceType(), type);
+      hip_aliased_tensor.ResizeLike(tensor);
+      hip_aliased_tensor.ShareExternalPointer(tensor.raw_mutable_data(), tensor.dtype(), tensor.numel() * tensor.itemsize());
+      input_tensors_[idx] = std::move(hip_aliased_tensor);
+    }
+    else {
+      CAFFE_ENFORCE_EQ(tensor.GetDeviceType(), type);
+      input_tensors_[idx] = std::move(tensor);
+    }
     return input_tensors_[idx];
 #else
     CAFFE_THROW("Non-legacy operators are not legal in xplat/caffe2");
