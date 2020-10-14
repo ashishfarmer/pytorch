@@ -88,6 +88,13 @@ inline void _call_caffe2_op_from_c10(
       }
     }
   }
+  // Convert HIP Tensors to CUDA Tensors
+  for (size_t i = 0; i < outputs.size(); i++) {
+    at::Tensor tmp = outputs[i];
+    if (ash.device().type() == c10::DeviceType::HIP) {
+      outputs[i] = std::move(tmp.to(tmp.options().device(c10::DeviceType::CUDA)));
+    }
+  }
   if (return_tensor_list) {
     // We should not unwrap the list if we expect tensor list in the schema.
     torch::jit::push(*stack, outputs);
