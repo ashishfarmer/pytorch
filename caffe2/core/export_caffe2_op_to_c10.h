@@ -91,7 +91,7 @@ inline void _call_caffe2_op_from_c10(
   // Convert HIP Tensors to CUDA Tensors
   for (size_t i = 0; i < outputs.size(); i++) {
     at::Tensor tmp = outputs[i];
-    if (ash.device().type() == c10::DeviceType::HIP) {
+    if (tmp.device().type() == c10::DeviceType::HIP) {
       outputs[i] = std::move(tmp.to(tmp.options().device(c10::DeviceType::CUDA)));
     }
   }
